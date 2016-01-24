@@ -5,6 +5,7 @@
     android:layout_height="wrap_content"
     android:elevation="4dp"
     android:background="@drawable/list_item"
+    android:id="@+id/scores_full_list"
     >
     <LinearLayout
         android:orientation="horizontal"
@@ -29,7 +30,6 @@
                 android:textSize="@dimen/TeamNames"
                 android:gravity="center"
                 android:text="@string/test_text"
-
                 android:id="@+id/home_name"/>
         </LinearLayout>
         <LinearLayout

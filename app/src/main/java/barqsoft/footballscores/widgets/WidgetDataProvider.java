@@ -5,37 +5,42 @@ import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
 import android.graphics.Color;
-import android.net.Uri;
 import android.os.Binder;
 import android.os.Bundle;
-import android.support.v4.content.CursorLoader;
 import android.widget.RemoteViews;
 import android.widget.RemoteViewsService.RemoteViewsFactory;
 
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Date;
-import java.util.List;
 
 import barqsoft.footballscores.DatabaseContract;
+import barqsoft.footballscores.R;
+import barqsoft.footballscores.Utilies;
 
 @SuppressLint("NewApi")
 public class WidgetDataProvider implements RemoteViewsFactory {
 
-	List<String> mCollections = new ArrayList<String>();
 	private String[] fragmentDate = new String[1];
 
 	Context mContext = null;
 	Cursor mCursor = null;
+	public static final int COL_HOME = 3;
+	public static final int COL_AWAY = 4;
+	public static final int COL_HOME_GOALS = 6;
+	public static final int COL_AWAY_GOALS = 7;
+	public static final int COL_DATE = 1;
+	public static final int COL_LEAGUE = 5;
+	public static final int COL_MATCHDAY = 9;
+	public static final int COL_ID = 8;
+	public static final int COL_MATCHTIME = 2;
 
-	public WidgetDataProvider(Context context, Intent intent,List<String> mCollections) {
+	public WidgetDataProvider(Context context, Intent intent) {
 		mContext = context;
-		this.mCollections=mCollections;
 	}
 
 	@Override
 	public int getCount() {
-		 return mCursor == null ? 0 : mCursor.getCount();
+		return mCursor == null ? 0 : mCursor.getCount();
 	}
 
 	@Override
@@ -51,18 +56,37 @@ public class WidgetDataProvider implements RemoteViewsFactory {
 	@Override
 	public RemoteViews getViewAt(int position) {
 		RemoteViews mView = new RemoteViews(mContext.getPackageName(),
-				android.R.layout.simple_list_item_1);
-		mView.setTextViewText(android.R.id.text1, mCollections.get(position));
+				R.layout.scores_list_item);
+		mCursor.moveToPosition(position);
+		mView.setTextViewText(R.id.home_name, mCursor.getString(COL_HOME));
+		mView.setContentDescription(R.id.home_name, mCursor.getString(COL_HOME));
+		mView.setTextColor(R.id.home_name, Color.BLACK);
 
-		mView.setTextColor(android.R.id.text1, Color.BLACK);
-		
+		mView.setTextViewText(R.id.away_name, mCursor.getString(COL_AWAY));
+		mView.setContentDescription(R.id.away_name, mCursor.getString(COL_AWAY));
+		mView.setTextColor(R.id.away_name, Color.BLACK);
+
+		mView.setTextViewText(R.id.score_textview, Utilies.getScores(mCursor.getInt(COL_HOME_GOALS), mCursor.getInt(COL_AWAY_GOALS)));
+		mView.setContentDescription(R.id.score_textview, Utilies.getScores(mCursor.getInt(COL_HOME_GOALS), mCursor.getInt(COL_AWAY_GOALS)));
+		mView.setTextColor(R.id.score_textview, Color.BLACK);
+
+		mView.setTextViewText(R.id.data_textview, mCursor.getString(COL_MATCHTIME));
+		mView.setContentDescription(R.id.data_textview, mCursor.getString(COL_MATCHTIME));
+		mView.setTextColor(R.id.data_textview, Color.BLACK);
+
+		mView.setImageViewResource(R.id.home_crest, Utilies.getTeamCrestByTeamName(
+				mCursor.getString(COL_HOME)));
+		mView.setImageViewResource(R.id.away_crest, Utilies.getTeamCrestByTeamName(
+				mCursor.getString(COL_HOME)));
+
+
 		final Intent fillInIntent = new Intent();
 		fillInIntent.setAction(WidgetProvider.ACTION_TOAST);
 		final Bundle bundle = new Bundle();
 		bundle.putString(WidgetProvider.EXTRA_STRING,
-				mCollections.get(position));
+				mCursor.getString(COL_ID));
 		fillInIntent.putExtras(bundle);
-		mView.setOnClickFillInIntent(android.R.id.text1, fillInIntent);
+		mView.setOnClickFillInIntent(R.id.scores_full_list, fillInIntent);
 		return mView;
 	}
 
@@ -102,18 +126,11 @@ public class WidgetDataProvider implements RemoteViewsFactory {
 		mCursor =mContext.getContentResolver().query(DatabaseContract.scores_table.buildScoreWithDate(),
 				null, null, fragmentDate, null);
 		Binder.restoreCallingIdentity(identityToken);
-		mCollections.clear();
 		mCursor.moveToFirst();
 		while (!mCursor.isAfterLast())
 		{
-			mCollections.add(mCursor.getString(0));
 			mCursor.moveToNext();
 		}
-
-//		mCollections.clear();
-//		for (int i = 1; i <= 10; i++) {
-//			mCollections.add("Sneha " + i);
-//		}
 	}
 
 	@Override
